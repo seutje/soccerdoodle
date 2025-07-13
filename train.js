@@ -29,28 +29,52 @@ function train(data, labels, epochs = 300, lr = 0.1) {
   return { weights, bias };
 }
 
-function generateData(role) {
+function generateData(role, samples = 500) {
   const data = [];
   const labels = [];
-  for (let i = 0; i < 100; i++) {
-    const ballX = Math.random() * 2 - 1;
-    const ballY = Math.random() * 2 - 1;
-    data.push([ballX, ballY]);
+
+  for (let i = 0; i < samples; i++) {
+    let playerX = Math.random() * 2 - 1;
+    let playerY = Math.random() * 2 - 1;
+    let ballX = Math.random() * 2 - 1;
+    let ballY = Math.random() * 2 - 1;
+
+    // simulate a few steps of play
+    for (let step = 0; step < 5; step++) {
+      // random ball movement
+      ballX = Math.max(-1, Math.min(1, ballX + (Math.random() - 0.5) * 0.2));
+      ballY = Math.max(-1, Math.min(1, ballY + (Math.random() - 0.5) * 0.2));
+
+      // simple player chase behaviour
+      const dx = ballX - playerX;
+      const dy = ballY - playerY;
+      const dist = Math.sqrt(dx * dx + dy * dy) + 1e-6;
+
+      playerX += (dx / dist) * 0.1;
+      playerY += (dy / dist) * 0.1;
+    }
+
+    const feature = [ballX - playerX, ballY - playerY];
+    data.push(feature);
+
+    let label = 0;
     switch (role) {
       case 'forward':
-        labels.push(ballX > 0 ? 1 : 0);
+        label = ballX > 0 && Math.abs(ballY) < 0.5 ? 1 : 0;
         break;
       case 'midfielder':
-        labels.push(ballY > 0 ? 1 : 0);
+        label = Math.abs(ballX) < 0.3 && Math.abs(ballY) < 0.3 ? 1 : 0;
         break;
       case 'defender':
-        labels.push(ballX < 0 ? 1 : 0);
+        label = ballX < 0 ? 1 : 0;
         break;
       case 'goalkeeper':
-        labels.push(Math.abs(ballY) < 0.5 ? 1 : 0);
+        label = ballX < -0.7 && Math.abs(ballY) < 0.4 ? 1 : 0;
         break;
     }
+    labels.push(label);
   }
+
   return { data, labels };
 }
 
