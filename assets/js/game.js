@@ -378,10 +378,9 @@ function update() {
     gameState.ball.vx *= 0.98;
     gameState.ball.vy *= 0.98;
     
-    // Ball collision with boundaries
+    // Ball out of bounds (top or bottom)
     if (gameState.ball.y - BALL_RADIUS < FIELD_Y || gameState.ball.y + BALL_RADIUS > FIELD_Y + FIELD_HEIGHT) {
-        gameState.ball.vy *= -0.8;
-        gameState.ball.y = Math.max(FIELD_Y + BALL_RADIUS, Math.min(FIELD_Y + FIELD_HEIGHT - BALL_RADIUS, gameState.ball.y));
+        resetBall();
     }
     
     // Check for goals
@@ -396,9 +395,8 @@ function update() {
             setTimeout(() => canvas.classList.remove('goal-flash'), 1000);
             resetPositions();
         } else {
-            // Out of bounds
-            gameState.ball.vx *= -0.8;
-            gameState.ball.x = FIELD_X + BALL_RADIUS;
+            // Out of bounds on the left side
+            resetBall();
         }
     }
     
@@ -412,8 +410,8 @@ function update() {
             setTimeout(() => canvas.classList.remove('goal-flash'), 1000);
             resetPositions();
         } else {
-            gameState.ball.vx *= -0.8;
-            gameState.ball.x = FIELD_X + FIELD_WIDTH - BALL_RADIUS;
+            // Out of bounds on the right side
+            resetBall();
         }
     }
     
@@ -543,6 +541,14 @@ function draw() {
     }
 }
 
+// Reset ball to the center
+function resetBall() {
+    gameState.ball.x = CANVAS_WIDTH / 2;
+    gameState.ball.y = CANVAS_HEIGHT / 2;
+    gameState.ball.vx = 0;
+    gameState.ball.vy = 0;
+}
+
 // Reset positions after goal
 function resetPositions() {
     gameState.ball.x = CANVAS_WIDTH / 2;
@@ -596,5 +602,5 @@ if (typeof window !== 'undefined') {
 
 // Export for testing
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { initPlayers, gameState };
+    module.exports = { initPlayers, gameState, resetBall };
 }
