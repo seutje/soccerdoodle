@@ -12,6 +12,35 @@ const BALL_RADIUS = 7;
 const MAX_SPEED = 2.5;
 const MAX_BALL_SPEED = 4;
 
+// Loaded AI model
+let aiModel = null;
+
+function loadModel() {
+    const modelPath = 'models/model.json';
+
+    // Browser environment
+    if (typeof window !== 'undefined' && window.fetch) {
+        fetch(modelPath)
+            .then(res => res.ok ? res.json() : null)
+            .then(model => { aiModel = model; })
+            .catch(() => { /* ignore load errors */ });
+    } else {
+        // Node environment
+        try {
+            const fs = require('fs');
+            const path = require('path');
+            const data = fs.readFileSync(path.join(__dirname, '../../models/model.json'), 'utf8');
+            aiModel = JSON.parse(data);
+        } catch (e) {
+            // ignore load errors
+        }
+    }
+}
+
+if (typeof __TEST__ === 'undefined') {
+    loadModel();
+}
+
 // Get canvas and context
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -137,15 +166,26 @@ function makeAIDecisions() {
                 break;
                 
             case 'forward':
-                // Forwards try to get in scoring position
-                if (Math.abs(ball.x - (FIELD_X + FIELD_WIDTH)) < 100) {
-                    // Ball is near opponent's goal
-                    targetX = ball.x + 10 * team1.direction;
-                    targetY = ball.y;
+                if (aiModel) {
+                    const features = [ball.x - player.x, ball.y - player.y];
+                    let z = aiModel.bias;
+                    aiModel.weights.forEach((w, i) => { z += w * features[i]; });
+                    const prob = 1 / (1 + Math.exp(-z));
+                    if (prob > 0.5) {
+                        targetX = ball.x + 10 * team1.direction;
+                        targetY = ball.y;
+                    } else {
+                        targetX = FIELD_X + FIELD_WIDTH - 100;
+                        targetY = CANVAS_HEIGHT / 2;
+                    }
                 } else {
-                    // Otherwise move towards opponent's goal
-                    targetX = FIELD_X + FIELD_WIDTH - 100;
-                    targetY = CANVAS_HEIGHT / 2;
+                    if (Math.abs(ball.x - (FIELD_X + FIELD_WIDTH)) < 100) {
+                        targetX = ball.x + 10 * team1.direction;
+                        targetY = ball.y;
+                    } else {
+                        targetX = FIELD_X + FIELD_WIDTH - 100;
+                        targetY = CANVAS_HEIGHT / 2;
+                    }
                 }
                 break;
         }
@@ -181,12 +221,26 @@ function makeAIDecisions() {
                 break;
                 
             case 'forward':
-                if (Math.abs(ball.x - FIELD_X) < 100) {
-                    targetX = ball.x - 10 * team2.direction;
-                    targetY = ball.y;
+                if (aiModel) {
+                    const features = [ball.x - player.x, ball.y - player.y];
+                    let z = aiModel.bias;
+                    aiModel.weights.forEach((w, i) => { z += w * features[i]; });
+                    const prob = 1 / (1 + Math.exp(-z));
+                    if (prob > 0.5) {
+                        targetX = ball.x - 10 * team2.direction;
+                        targetY = ball.y;
+                    } else {
+                        targetX = FIELD_X + 100;
+                        targetY = CANVAS_HEIGHT / 2;
+                    }
                 } else {
-                    targetX = FIELD_X + 100;
-                    targetY = CANVAS_HEIGHT / 2;
+                    if (Math.abs(ball.x - FIELD_X) < 100) {
+                        targetX = ball.x - 10 * team2.direction;
+                        targetY = ball.y;
+                    } else {
+                        targetX = FIELD_X + 100;
+                        targetY = CANVAS_HEIGHT / 2;
+                    }
                 }
                 break;
         }

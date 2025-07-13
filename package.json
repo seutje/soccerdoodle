@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jest",
     "lint": "eslint assets/**/*.js tests/**/*.js -c eslint.config.mjs",
-    "start": "node server.js"
+    "start": "node server.js",
+    "train": "node train.js"
   },
   "devDependencies": {
     "eslint": "^8.0.0",
