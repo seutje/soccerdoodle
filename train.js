@@ -29,22 +29,45 @@ function train(data, labels, epochs = 300, lr = 0.1) {
   return { weights, bias };
 }
 
-const data = [];
-const labels = [];
-for (let i = 0; i < 100; i++) {
-  const ballX = Math.random() * 2 - 1;
-  const ballY = Math.random() * 2 - 1;
-  data.push([ballX, ballY]);
-  labels.push(ballX > 0 ? 1 : 0);
+function generateData(role) {
+  const data = [];
+  const labels = [];
+  for (let i = 0; i < 100; i++) {
+    const ballX = Math.random() * 2 - 1;
+    const ballY = Math.random() * 2 - 1;
+    data.push([ballX, ballY]);
+    switch (role) {
+      case 'forward':
+        labels.push(ballX > 0 ? 1 : 0);
+        break;
+      case 'midfielder':
+        labels.push(ballY > 0 ? 1 : 0);
+        break;
+      case 'defender':
+        labels.push(ballX < 0 ? 1 : 0);
+        break;
+      case 'goalkeeper':
+        labels.push(Math.abs(ballY) < 0.5 ? 1 : 0);
+        break;
+    }
+  }
+  return { data, labels };
 }
 
-const model = train(data, labels);
+function trainAll() {
+  const roles = ['goalkeeper', 'defender', 'midfielder', 'forward'];
+  const modelDir = path.join(__dirname, 'models');
+  if (!fs.existsSync(modelDir)) {
+    fs.mkdirSync(modelDir);
+  }
 
-const modelDir = path.join(__dirname, 'models');
-if (!fs.existsSync(modelDir)) {
-  fs.mkdirSync(modelDir);
+  roles.forEach(role => {
+    const { data, labels } = generateData(role);
+    const model = train(data, labels);
+    fs.writeFileSync(path.join(modelDir, `${role}.json`), JSON.stringify(model, null, 2));
+    console.log(`Model for ${role} saved to models/${role}.json`);
+  });
 }
 
-fs.writeFileSync(path.join(modelDir, 'model.json'), JSON.stringify(model, null, 2));
-console.log('Model trained and saved to models/model.json');
+trainAll();
 
