@@ -131,11 +131,12 @@ function makeAIDecisions() {
                 break;
                 
             case 'midfielder':
-                // Move behind the ball when attacking in opponent's half
+                // Move behind the ball when attacking and drop deeper to defend
                 if (ball.x > FIELD_X + FIELD_WIDTH / 2) {
                     targetX = ball.x - 40 * team1.direction;
                 } else {
-                    targetX = ball.x;
+                    // Back off toward own goal when ball is in our half
+                    targetX = ball.x - 60 * team1.direction;
                 }
                 targetY = ball.y;
                 break;
@@ -180,11 +181,12 @@ function makeAIDecisions() {
                 break;
                 
             case 'midfielder':
-                // Move behind the ball when attacking in opponent's half
+                // Move behind the ball when attacking and drop deeper to defend
                 if (ball.x < FIELD_X + FIELD_WIDTH / 2) {
                     targetX = ball.x - 40 * team2.direction;
                 } else {
-                    targetX = ball.x;
+                    // Back off toward own goal when ball is in our half
+                    targetX = ball.x - 60 * team2.direction;
                 }
                 targetY = ball.y;
                 break;
