@@ -431,15 +431,28 @@ function togglePause() {
     gameState.isPaused = !gameState.isPaused;
 }
 
-// Speed control
-const speedSlider = document.getElementById('speedSlider');
-const speedValue = document.getElementById('speedValue');
+// Expose controls in the browser and start the game unless running under test
+if (typeof window !== 'undefined') {
+    window.resetGame = resetGame;
+    window.togglePause = togglePause;
 
-speedSlider.addEventListener('input', (e) => {
-    gameState.speedMultiplier = parseFloat(e.target.value);
-    speedValue.textContent = gameState.speedMultiplier.toFixed(1) + 'x';
-});
+    const speedSlider = document.getElementById('speedSlider');
+    const speedValue = document.getElementById('speedValue');
 
-// Initialize game
-initPlayers();
-gameLoop();
+    if (speedSlider && speedValue) {
+        speedSlider.addEventListener('input', (e) => {
+            gameState.speedMultiplier = parseFloat(e.target.value);
+            speedValue.textContent = gameState.speedMultiplier.toFixed(1) + 'x';
+        });
+    }
+
+    if (!window.__TEST__) {
+        initPlayers();
+        gameLoop();
+    }
+}
+
+// Export for testing
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { initPlayers, gameState };
+}
