@@ -12,31 +12,40 @@ const BALL_RADIUS = 7;
 const MAX_SPEED = 2.5;
 const MAX_BALL_SPEED = 4;
 
-// Loaded AI models per position
-let aiModels = {};
+// Loaded AI models per position for each team
+let aiModelsTeam1 = {};
+let aiModelsTeam2 = {};
 
-function loadModels() {
+function loadTeamModels(teamName, target) {
     const roles = ['goalkeeper', 'defender', 'midfielder', 'forward'];
 
     roles.forEach(role => {
-        const modelPath = `models/${role}.json`;
+        const modelPath = `models/${teamName}/${role}.json`;
 
         if (typeof window !== 'undefined' && window.fetch) {
             fetch(modelPath)
-                .then(res => res.ok ? res.json() : null)
-                .then(model => { if (model) aiModels[role] = model; })
+                .then(res => (res.ok ? res.json() : null))
+                .then(model => { if (model) target[role] = model; })
                 .catch(() => { /* ignore load errors */ });
         } else {
             try {
                 const fs = require('fs');
                 const path = require('path');
-                const data = fs.readFileSync(path.join(__dirname, `../../models/${role}.json`), 'utf8');
-                aiModels[role] = JSON.parse(data);
+                const data = fs.readFileSync(
+                    path.join(__dirname, `../../models/${teamName}/${role}.json`),
+                    'utf8'
+                );
+                target[role] = JSON.parse(data);
             } catch (e) {
                 // ignore load errors
             }
         }
     });
+}
+
+function loadModels() {
+    loadTeamModels('team1', aiModelsTeam1);
+    loadTeamModels('team2', aiModelsTeam2);
 }
 
 if (typeof __TEST__ === 'undefined') {
@@ -139,16 +148,17 @@ function makeAIDecisions() {
     
     // Team 1 AI decisions
     team1.players.forEach(player => {
+        const teamModels = aiModelsTeam1;
         let targetX, targetY;
         
         switch(player.role) {
             case 'goalkeeper':
                 // Goalkeeper stays near goal and tries to intercept ball
                 const goalX1 = FIELD_X + 5;
-                if (aiModels.goalkeeper) {
+                if (teamModels.goalkeeper) {
                     const features = [ball.x - player.x, ball.y - player.y];
-                    let z = aiModels.goalkeeper.bias;
-                    aiModels.goalkeeper.weights.forEach((w, i) => { z += w * features[i]; });
+                    let z = teamModels.goalkeeper.bias;
+                    teamModels.goalkeeper.weights.forEach((w, i) => { z += w * features[i]; });
                     const prob = 1 / (1 + Math.exp(-z));
                     if (prob > 0.5) {
                         targetX = ball.x;
@@ -161,10 +171,10 @@ function makeAIDecisions() {
                 break;
                 
             case 'defender':
-                if (aiModels.defender) {
+                if (teamModels.defender) {
                     const features = [ball.x - player.x, ball.y - player.y];
-                    let z = aiModels.defender.bias;
-                    aiModels.defender.weights.forEach((w, i) => { z += w * features[i]; });
+                    let z = teamModels.defender.bias;
+                    teamModels.defender.weights.forEach((w, i) => { z += w * features[i]; });
                     const prob = 1 / (1 + Math.exp(-z));
                     if (prob > 0.5) {
                         targetX = ball.x - 20;
@@ -185,10 +195,10 @@ function makeAIDecisions() {
                 break;
                 
             case 'midfielder':
-                if (aiModels.midfielder) {
+                if (teamModels.midfielder) {
                     const features = [ball.x - player.x, ball.y - player.y];
-                    let z = aiModels.midfielder.bias;
-                    aiModels.midfielder.weights.forEach((w, i) => { z += w * features[i]; });
+                    let z = teamModels.midfielder.bias;
+                    teamModels.midfielder.weights.forEach((w, i) => { z += w * features[i]; });
                     const prob = 1 / (1 + Math.exp(-z));
                     if (prob > 0.5) {
                         targetX = ball.x - 30 * team1.direction;
@@ -204,10 +214,10 @@ function makeAIDecisions() {
                 break;
                 
             case 'forward':
-                if (aiModels.forward) {
+                if (teamModels.forward) {
                     const features = [ball.x - player.x, ball.y - player.y];
-                    let z = aiModels.forward.bias;
-                    aiModels.forward.weights.forEach((w, i) => { z += w * features[i]; });
+                    let z = teamModels.forward.bias;
+                    teamModels.forward.weights.forEach((w, i) => { z += w * features[i]; });
                     const prob = 1 / (1 + Math.exp(-z));
                     if (prob > 0.5) {
                         targetX = ball.x + 10 * team1.direction;
@@ -234,15 +244,16 @@ function makeAIDecisions() {
     
     // Team 2 AI decisions
     team2.players.forEach(player => {
+        const teamModels = aiModelsTeam2;
         let targetX, targetY;
         
         switch(player.role) {
             case 'goalkeeper':
                 const goalX2 = FIELD_X + FIELD_WIDTH - 5;
-                if (aiModels.goalkeeper) {
+                if (teamModels.goalkeeper) {
                     const features = [ball.x - player.x, ball.y - player.y];
-                    let z = aiModels.goalkeeper.bias;
-                    aiModels.goalkeeper.weights.forEach((w, i) => { z += w * features[i]; });
+                    let z = teamModels.goalkeeper.bias;
+                    teamModels.goalkeeper.weights.forEach((w, i) => { z += w * features[i]; });
                     const prob = 1 / (1 + Math.exp(-z));
                     if (prob > 0.5) {
                         targetX = ball.x;
@@ -255,10 +266,10 @@ function makeAIDecisions() {
                 break;
                 
             case 'defender':
-                if (aiModels.defender) {
+                if (teamModels.defender) {
                     const features = [ball.x - player.x, ball.y - player.y];
-                    let z = aiModels.defender.bias;
-                    aiModels.defender.weights.forEach((w, i) => { z += w * features[i]; });
+                    let z = teamModels.defender.bias;
+                    teamModels.defender.weights.forEach((w, i) => { z += w * features[i]; });
                     const prob = 1 / (1 + Math.exp(-z));
                     if (prob > 0.5) {
                         targetX = ball.x + 20;
@@ -279,10 +290,10 @@ function makeAIDecisions() {
                 break;
                 
             case 'midfielder':
-                if (aiModels.midfielder) {
+                if (teamModels.midfielder) {
                     const features = [ball.x - player.x, ball.y - player.y];
-                    let z = aiModels.midfielder.bias;
-                    aiModels.midfielder.weights.forEach((w, i) => { z += w * features[i]; });
+                    let z = teamModels.midfielder.bias;
+                    teamModels.midfielder.weights.forEach((w, i) => { z += w * features[i]; });
                     const prob = 1 / (1 + Math.exp(-z));
                     if (prob > 0.5) {
                         targetX = ball.x + 30 * team2.direction;
@@ -298,10 +309,10 @@ function makeAIDecisions() {
                 break;
                 
             case 'forward':
-                if (aiModels.forward) {
+                if (teamModels.forward) {
                     const features = [ball.x - player.x, ball.y - player.y];
-                    let z = aiModels.forward.bias;
-                    aiModels.forward.weights.forEach((w, i) => { z += w * features[i]; });
+                    let z = teamModels.forward.bias;
+                    teamModels.forward.weights.forEach((w, i) => { z += w * features[i]; });
                     const prob = 1 / (1 + Math.exp(-z));
                     if (prob > 0.5) {
                         targetX = ball.x - 10 * team2.direction;

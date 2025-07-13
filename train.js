@@ -78,19 +78,27 @@ function generateData(role, samples = 500) {
   return { data, labels };
 }
 
-function trainAll() {
+function trainTeam(teamName) {
   const roles = ['goalkeeper', 'defender', 'midfielder', 'forward'];
-  const modelDir = path.join(__dirname, 'models');
+  const modelDir = path.join(__dirname, 'models', teamName);
   if (!fs.existsSync(modelDir)) {
-    fs.mkdirSync(modelDir);
+    fs.mkdirSync(modelDir, { recursive: true });
   }
 
   roles.forEach(role => {
     const { data, labels } = generateData(role);
     const model = train(data, labels);
-    fs.writeFileSync(path.join(modelDir, `${role}.json`), JSON.stringify(model, null, 2));
-    console.log(`Model for ${role} saved to models/${role}.json`);
+    fs.writeFileSync(
+      path.join(modelDir, `${role}.json`),
+      JSON.stringify(model, null, 2)
+    );
+    console.log(`Model for ${teamName} ${role} saved to models/${teamName}/${role}.json`);
   });
+}
+
+function trainAll() {
+  trainTeam('team1');
+  trainTeam('team2');
 }
 
 trainAll();
