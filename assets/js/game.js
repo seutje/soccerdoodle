@@ -11,6 +11,8 @@ const PLAYER_RADIUS = 10;
 const BALL_RADIUS = 7;
 const MAX_SPEED = 2.5;
 const MAX_BALL_SPEED = 4;
+const MIDFIELD_RANGE = 60; // distance from midline to trigger defender backoff
+const DEFENDER_BACKOFF = 30; // how far defenders drop when ball is near the middle
 
 // Get canvas and context
 const canvas = document.getElementById('gameCanvas');
@@ -118,9 +120,14 @@ function makeAIDecisions() {
                 targetY = Math.max(FIELD_Y + 20, Math.min(FIELD_Y + FIELD_HEIGHT - 20, ball.y));
                 break;
                 
-            case 'defender':
-                // Defenders try to intercept ball when it's in their half
-                if (ball.x < FIELD_X + FIELD_WIDTH / 2) {
+            case 'defender': {
+                const midX = FIELD_X + FIELD_WIDTH / 2;
+                if (Math.abs(ball.x - midX) < MIDFIELD_RANGE) {
+                    // Back off toward own goal when play is around midfield
+                    targetX = player.x - DEFENDER_BACKOFF * team1.direction;
+                    targetY = player.y;
+                } else if (ball.x < midX) {
+                    // Intercept when ball is in our half
                     targetX = ball.x - 20;
                     targetY = ball.y;
                 } else {
@@ -128,6 +135,7 @@ function makeAIDecisions() {
                     targetX = player.x;
                     targetY = player.y;
                 }
+            }
                 break;
                 
             case 'midfielder':
@@ -170,14 +178,19 @@ function makeAIDecisions() {
                 targetY = Math.max(FIELD_Y + 20, Math.min(FIELD_Y + FIELD_HEIGHT - 20, ball.y));
                 break;
                 
-            case 'defender':
-                if (ball.x > FIELD_X + FIELD_WIDTH / 2) {
+            case 'defender': {
+                const midX = FIELD_X + FIELD_WIDTH / 2;
+                if (Math.abs(ball.x - midX) < MIDFIELD_RANGE) {
+                    targetX = player.x - DEFENDER_BACKOFF * team2.direction;
+                    targetY = player.y;
+                } else if (ball.x > midX) {
                     targetX = ball.x + 20;
                     targetY = ball.y;
                 } else {
                     targetX = player.x;
                     targetY = player.y;
                 }
+            }
                 break;
                 
             case 'midfielder':
