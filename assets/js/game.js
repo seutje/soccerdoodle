@@ -131,8 +131,12 @@ function makeAIDecisions() {
                 break;
                 
             case 'midfielder':
-                // Midfielders follow the ball more closely
-                targetX = ball.x - 30 * team1.direction;
+                // Move behind the ball when attacking in opponent's half
+                if (ball.x > FIELD_X + FIELD_WIDTH / 2) {
+                    targetX = ball.x - 40 * team1.direction;
+                } else {
+                    targetX = ball.x;
+                }
                 targetY = ball.y;
                 break;
                 
@@ -176,7 +180,12 @@ function makeAIDecisions() {
                 break;
                 
             case 'midfielder':
-                targetX = ball.x + 30 * team2.direction;
+                // Move behind the ball when attacking in opponent's half
+                if (ball.x < FIELD_X + FIELD_WIDTH / 2) {
+                    targetX = ball.x - 40 * team2.direction;
+                } else {
+                    targetX = ball.x;
+                }
                 targetY = ball.y;
                 break;
                 
